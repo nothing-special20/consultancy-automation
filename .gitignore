@@ -1,0 +1,15 @@
+*.env
+*.DS_Store
+*.db
+*.flag
+*.state
+*.hierarchy
+*.wal
+*.bak
+*proplengths
+*.bloom
+*.cna
+*indexcount
+*.xlsx
+*.csv
+*commitlog.d*
