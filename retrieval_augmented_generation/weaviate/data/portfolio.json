@@ -1,0 +1,62 @@
+[
+    {
+        "project_title": "Analyst at Pharmaceutical Wholesaler",
+        "project_description": "I worked with sales teams, finance teams, and IT teams to find opportunities to improve sales and profit. I created sales dashboards that led to millions of additional profit annually",
+        "skills_used": "Excel, data visualization, sales reports, dashboards, analytics, sql"
+    },
+    {
+        "project_title": "Software Engineer at Legal Tech Startup",
+        "project_description": "I worked for an online notary startup to build an online notary and esign platform that let people notarize documents from the comfort of their home. This involved front end development, back end development, integrating video conference call APIs, email APIs, sms APIs, secure document storage, credential analysis, customer verification, and other third party software integrations.",
+        "skills_used": "javascript, node, react, html, css, git, postgres, gitlab, jira, docker"
+    },
+    {
+        "project_title": "software consultant for private equity firm",
+        "project_description": "I worked with a private equity company to manage their operations management software, build web pages, back up databases, and automate processes.",
+        "skills_used": "python, aws, aws lambda, aws rds, database backup, automation"
+    },
+    {
+        "project_title": "automation for recruiting company",
+        "project_description": "I helped a recruiting company set up a zoho account to automate and streamline their recruiting process",
+        "skills_used": "zoho recruit, zoho flow, zoho bigin, zoho booking"
+    },
+    {
+        "project_title": "AI proposal generator",
+        "project_description": "I built a proposal generator that uses GPT4 and ADA2 to generate proposals for a consulting company. The proposal generator compares job descriptions with previous portfolio work to generate a proposal that is tailored to the job description based on the consultant's previous work.",
+        "skills_used": "GPT4, chatgpt, ada2, python, retrieval augmented generation, weaviate, vector databases, sales, artificial intelligence, OpenAI API, langchain"
+    },
+    {
+        "project_title": "Amazon Review AI tool",
+        "project_description": "I used OpenAI's GPT to analyze amazon customer reviews to find trends in reviews to provide amazon sellers and marketers with insights to better market their product, write better listings, improve their product, and improve sales.",
+        "skills": "amazon, customer reviews, GPT3.5, spacy, python, django, html, css, OpenAI API"
+    },
+    {
+        "project_title": "youtube transcriptions",
+        "project_description": "I built a tool that uses OpenAI's whisper model to generate transcriptions for youtube videos.",
+        "skills": "youtube, whisper, python, OpenAI API"
+    },
+    {
+        "project_title": "document processing for law firm",
+        "project_description": "I built tools in python to scan tens of thousands of documents for lawyers to speed up legal research by weeks",
+        "skills": "python, document processing, legal research, legal documents, tesseract OCR, OCR"
+    },
+    {
+        "project_title": "amazon advertising analytics web app",
+        "project_description": "I built a web app that uses amazon advertising APIs to analyze advertising campaigns and provide insights to improve advertising campaigns",
+        "skills": "amazon advertising, amazon advertising API, python, django, html, css, javascript, jquery, bootstrap, postgres, postgresql, sql, git, postgres, plotly, dashboard, data visualization, saas, langchain"
+    },
+    {
+        "project_title": "tiktok analytics web app",
+        "project_description": "I built a web app that uses tiktok APIs to analyze tiktok accounts and provide insights to improve tiktok accounts",
+        "skills": "tiktok, tiktok API, python, django, html, css, javascript, jquery, bootstrap, postgres, postgresql, sql, git, postgres, plotly, dashboard, data visualization, saas"
+    },
+    {
+        "project_title": "real estate web app",
+        "project_description": "I built a web app that shows you the most recent sale prices of homes in counties in Florida and shows them on a map so that real estate investors can find deals",
+        "skills": "google maps api, python, django, html, css, javascript, bootstrap, postgres, postgresql, sql"
+    },
+    {
+        "project_title": "upwork job finder",
+        "project_description": "I built a tool that uses upwork's RSS feed to find jobs posted recently so I could be the first to apply",
+        "skills": "make.com, upwork rss, data transformtation"
+    }
+]
