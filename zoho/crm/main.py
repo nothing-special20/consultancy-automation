@@ -1,7 +1,7 @@
 import requests
 import json
 
-import urllib.parse
+import sys
 
 from dotenv import dotenv_values
 
@@ -12,6 +12,9 @@ ZOHO_API_KEY = config["ZOHO_API_KEY"]
 EMAIL = config["EMAIL"]
 ZOHO_REDIRECT_URI = config["ZOHO_REDIRECT_URI"]
 ZOHO_TEMP_CODE = config["ZOHO_TEMP_CODE"]
+ZOHO_CRM_OWNER_ID = config["ZOHO_CRM_OWNER_ID"]
+ZOHO_CRM_OWNER_NAME = config["ZOHO_CRM_OWNER_NAME"]
+ZOHO_AUTH_TOKEN = config["ZOHO_AUTH_TOKEN"]
 
 
 zoho_accounts_url = "https://accounts.zoho.com"
@@ -35,38 +38,88 @@ def authorization_token():
     return response.json()
 
 
-auth_token_json = authorization_token()
-auth_token = auth_token_json["access_token"]
-print(auth_token)
-
-def update_lead(auth_token):
+#####Leads
+def create_lead(auth_token, records):
     api_headers = {
         "Authorization": "Zoho-oauthtoken " + auth_token,
     }
 
+    for rec in records:
+        rec["Owner"] = {"id": ZOHO_CRM_OWNER_ID, "full_name": ZOHO_CRM_OWNER_NAME}
+
     leads_url = "https://www.zohoapis.com/crm/v2.2/Leads"
     request_body = {
-        "data": [
-            {
-                "Owner": {"id": "123", "full_name": "xyz"},
-                "Email_Opt_Out": False,
-                "Rating": "-None-",
-                "Lead_Status": "-None-",
-                "Industry": "-None-",
-                "Lead_Source": "-None-",
-                "Company": "test",
-                "Last_Name": "testerer",
-                "First_Name": "test",
-                "Designation": "test",
-                "Phone": "1231231234",
-                "Website": "test.com",
-                "Description": "test",
-            }
-        ]
+        "data": records,
     }
 
     request_body = json.dumps(request_body)
 
     response = requests.post(url=leads_url, headers=api_headers, data=request_body)
 
+    return response.json()
+
+
+#####Deals
+def create_deal(auth_token, records):
+    headers = {
+        "Authorization": "Zoho-oauthtoken " + auth_token,
+    }
+
+    for rec in records:
+        rec["Owner"] = {"id": ZOHO_CRM_OWNER_ID, "full_name": ZOHO_CRM_OWNER_NAME}
+
+    leads_url = "https://www.zohoapis.com/crm/v2.2/Leads"
+    request_body = {
+        "data": records,
+    }
+
+    request_body = json.dumps(request_body)
+
+    response = requests.post(url=leads_url, headers=headers, data=request_body)
+
     print(response.text)
+
+
+if __name__ == "__main__":
+    if sys.argv[1] == "get_auth_token":
+        auth_token_json = authorization_token()
+        print(auth_token_json)
+        auth_token = auth_token_json["access_token"]
+        print(auth_token)
+
+    elif sys.argv[1] == "create_lead":
+        records = [
+            {
+                "Email_Opt_Out": False,
+                "Rating": "-None-",
+                "Lead_Status": "-None-",
+                "Industry": "-None-",
+                "Lead_Source": "-None-",
+                "Company": "test",
+                "Last_Name": "me",
+                "First_Name": "delete",
+                "Designation": "test",
+                "Phone": "1231231234",
+                "Website": "test.com",
+                "Description": "test",
+            }
+        ]
+
+        lead = create_lead(ZOHO_AUTH_TOKEN, records)
+
+        print(lead)
+
+    elif sys.argv[1] == "create_deal":
+        records = [
+            {
+                "Ownership": "-None-",
+                "Rating": "-None-",
+                "Industry": "-None-",
+                "Account_Type": "-None-",
+                "Account_Name": "test account",
+                "$zia_owner_assignment": "owner_recommendation_unavailable",
+                "zia_suggested_users": {},
+            }
+        ]
+
+        create_deal(ZOHO_AUTH_TOKEN, records)
