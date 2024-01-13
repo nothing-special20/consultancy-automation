@@ -16,7 +16,7 @@
     },
     {
         "project_title": "automation for recruiting company",
-        "project_description": "I helped a recruiting company set up a zoho account to automate and streamline their recruiting process",
+        "project_description": "I helped a recruiting company set up a zoho account to automate and streamline their recruiting process. This involved automating sending interview requests upon candidate status changes, automatically updating the CRM when the candidate schedules the interview with Zoho Bookings, and ingesting resumes from emails and creating candidate records from them.",
         "skills_used": "zoho recruit, zoho flow, zoho bigin, zoho booking"
     },
     {
@@ -56,7 +56,62 @@
     },
     {
         "project_title": "upwork job finder",
-        "project_description": "I built a tool that uses upwork's RSS feed to find jobs posted recently so I could be the first to apply",
+        "project_description": "I built a tool that uses upwork's RSS feed to find jobs posted recently so I could be the first to apply. I used this make.com scenario to integrate and connect multiple systems so that I can save hours searching for jobs and sign more clients.",
         "skills": "make.com, upwork rss, data transformtation"
+    },
+    {
+        "project_title": "slackbot",
+        "project_description": "Created a simple slackbot with python to post upwork jobs to different channels so that freelancers could get access to the most recently posted jobs in their niche",
+        "skills": "python, slackbot, upwork, rss, data cleaning, data transformation, data parsing"
+    },
+    {
+        "project_title": "general profile",
+        "project_description": "I'm a software consultant focused on business automation and AI, particularly sales systems. I've worked on automation and analytics projects with software for over 5 years now.",
+        "skills": "python, make.com, django, openai, dashboards, data visualization, html, css, javascript, machine learning, analysis"
+    },
+    {
+        "project_title": "software consultant - integrations & automations",
+        "project_description": "I'm a software consultant focused on business automation and AI. I've spent the last several years working on integrating software tools and creating automations to free up time for businesses.",
+        "skills": "python, make.com, django, openai, dashboards, data visualization, html, css, javascript, machine learning, analysis"
+    },
+    {
+        "project_title": "secure document send app",
+        "project_description": "I created a web app that allows users to securely share documents via email. It allows the user to upload a document, which will email a URL and text a pass code to a recipient so that they may access the document securely. This also included a timer, so that the document was only shared for a certain amount of time.",
+        "skills": "python, django, aws, amazon web services, html, css, javascript, twilio, textmagic, postgres, docker, sendgrid"
+    },
+    {
+        "project_title": "email marketing automation",
+        "project_description": "I use smartlead.ai to set up email marketing automation for myself. This also involves using apollo to create lead lists and using million verifier to validate their emails",
+        "skills": "apollo.io, smartlead.ai, millionverifier, million verifier, email automation, dmarc, gsuite, google mail, gmail"
+    },
+    {
+        "project_title": "airtable - limited experience",
+        "project_description": "I've used airtable briefly for upwork projects, however, I have 4+ years of experience managing databases, integrating databases with web apps, and 7+ years of experience with excel, so I'm confident I can learn airtable quickly.",
+        "skills": "airtable"
+    },
+    {
+        "project_title": "zapier",
+        "project_description": "I have very limited experience with zapier and prefer using make.com or python.",
+        "skills": "zapier"
+    },
+    {
+        "project_title":"web scraping for law firm",
+        "project_description": "I built a web scraper to scrape hundreds of thousands of legal documents from public record for law firms to speed up legal research by weeks",
+        "skills": "python, web scraping, selenium, beautifulsoup, html, css, javascript"
+    },
+    {
+        "project_title": "smartlead.ai api integration",
+        "project_description": "I built a python application that uses smartlead.ai's API to manage and automate running email marketing campaigns. This allows me to sync smartlead.ai with my zoho crm, streamline email verification, and using OpenAI's GPT3 to personalize emails to improve conversion rates.",
+        "skills": "python, smartlead.ai, email marketing, email automation, email campaigns, email marketing campaigns, email marketing automation"
+    },
+    {
+        "project_title": "millionverifier api integration",
+        "project_description": "I built a python application that uses millionverifier's API to validate emails for email marketing campaigns",
+        "skills": "python, millionverifier, email validation, email marketing, email automation, email campaigns, email marketing campaigns, email marketing automation"
+    },
+    {
+        "project_title": "zoho crm api integration",
+        "project_description": "I built a python application that uses zoho's API to manage and automate updating my CRM.",
+        "skills": "python, zoho, zoho crm, api integration, customer relationship management"
     }
 ]
