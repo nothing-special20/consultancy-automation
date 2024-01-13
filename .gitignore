@@ -13,3 +13,4 @@
 *.xlsx
 *.csv
 *commitlog.d*
+*.pyc
