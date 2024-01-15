@@ -1,11 +1,12 @@
 import requests
 import json
 
-import sys
+import sys, os
 
 from dotenv import dotenv_values
 
-config = dotenv_values(".env")
+env_path = os.path.dirname(os.path.realpath(__file__))+ "/.env"
+config = dotenv_values(env_path)
 ZOHO_CLIENT_ID = config["ZOHO_CLIENT_ID"]
 ZOHO_CLIENT_SECRET = config["ZOHO_CLIENT_SECRET"]
 ZOHO_API_KEY = config["ZOHO_API_KEY"]
@@ -21,7 +22,6 @@ zoho_accounts_url = "https://accounts.zoho.com"
 
 auth_url = zoho_accounts_url + "/oauth/v2/token"  # + "/oauth/v2/auth"
 
-
 # https://www.zoho.com/accounts/protocol/oauth/self-client/client-credentials-flow.html
 def authorization_token():
     authorization_token_data = {
@@ -36,7 +36,6 @@ def authorization_token():
     response = requests.post(url=auth_url, params=authorization_token_data)
 
     return response.json()
-
 
 #####Leads
 def create_lead(auth_token, records):
@@ -77,7 +76,7 @@ def create_deal(auth_token, records):
 
     response = requests.post(url=leads_url, headers=headers, data=request_body)
 
-    print(response.text)
+    return response
 
 
 if __name__ == "__main__":
