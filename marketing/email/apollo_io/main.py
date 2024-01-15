@@ -4,12 +4,12 @@ import pandas as pd
 import re
 from bs4 import BeautifulSoup
 
-import sys
+import os, sys
 
 from dotenv import dotenv_values
 
-config = dotenv_values(".env")
-
+env_path = os.path.dirname(os.path.realpath(__file__))+ "/.env"
+config = dotenv_values(env_path)
 
 APOLLO_API_KEY = config["APOLLO_API_KEY"]
 APOLLO_API_BASE_URL = "https://api.apollo.io"
@@ -54,36 +54,33 @@ def get_users():
     return response.json()
 
 
-def apollo_contact_etl_zoho_lead(x):
+def apollo_contact_etl_zoho_lead(x, tags=None):
     extracted_data = {
-        "Annual Revenue": None,  # Not available in the JSON
-        "Average Time Spent (Minutes)": None,  # Not available
+        "Annual_Revenue": None,  # Not available in the JSON
+        "Average_Time_Spent_(Minutes)": None,  # Not available
         "City": x.get("city", None),
         "Company": x.get("organization_name", None),
-        "Converted Account": None,  # Not available
-        "Converted Contact": None,  # Not available
-        "Converted Deal": None,  # Not available
+        "Converted_Account": None,  # Not available
+        "Converted_Contact": None,  # Not available
+        "Converted_Deal": None,  # Not available
         "Country": x.get("country", None),
-        "Created By": x.get("creator_id", None),
-        "Days Visited": None,  # Not available
+        "Days_Visited": None,  # Not available
         "Description": None,  # Not available
         "Email": x.get("email", None),
-        "Email Opt Out": x.get("email_unsubscribed", None),
-        "Email Verification Date": None,  # Not available
-        "Email Verification Status": x.get("email_true_status", None),
+        "Email_Opt_Out": x.get("email_unsubscribed", None),
+        "Email_Verification_Date": None,  # Not available
+        "Email_Verification_Status": x.get("email_true_status", None),
         "Fax": None,  # Not available
-        "First Name": x.get("first_name", None),
-        "First Page Visited": None,  # Not available
-        "First Visit": None,  # Not available
+        "First_Name": x.get("first_name", None),
+        "First_Page_Visited": None,  # Not available
+        "First_Visit": None,  # Not available
         "Industry": None,  # Not available
-        "Last Name": x.get("last_name", None),
-        "Lead Image": x.get("photo_url", None),
-        "Lead Owner": x.get("owner_id", None),
-        "Lead Source": x.get("source", None),
-        "Lead Status": None,  # Not available
+        "Last_Name": x.get("last_name", None),
+        "Record_Image": x.get("photo_url", None),
+        "Lead_Owner": x.get("owner_id", None),
+        "Lead_Status": None,  # Not available
         "Mobile": None,  # Not available
-        "Modified By": x.get("updated_at", None),
-        "Most Recent Visit": None,  # Not available
+        "Most_Recent_Visit": None,  # Not available
         "No. of Employees": None,  # Not available
         "Number Of Chats": None,  # Not available
         "Phone": x.get("sanitized_phone", None),
@@ -93,11 +90,13 @@ def apollo_contact_etl_zoho_lead(x):
         "Skype ID": None,  # Not available
         "State": x.get("state", None),
         "Street": None,  # Not available
-        "Title": x.get("title", None),
+        "Designation": x.get("title", None),
         "Twitter": x["account"].get("twitter_url", None) if "account" in x else None,
         "Visitor Score": None,  # Not available
         "Website": x["account"].get("website_url", None) if "account" in x else None,
         "Zip Code": None,  # Not available
+        "Lead_Source": "apollo.io",
+        "Tag": tags
     }
 
     return extracted_data
