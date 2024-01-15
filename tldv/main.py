@@ -1,8 +1,11 @@
 import requests
+import os
 
 from dotenv import dotenv_values
 
-config = dotenv_values(".env")
+env_path = os.path.dirname(os.path.realpath(__file__))+ "/.env"
+config = dotenv_values(env_path)
+
 TLDV_API_KEY = config['TLDV_API_KEY']
 MEETING_ID = config['MEETING_ID']
 

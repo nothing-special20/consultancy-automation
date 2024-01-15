@@ -18,7 +18,9 @@ from slack_sdk.errors import SlackApiError
 
 from dotenv import dotenv_values
 
-config = dotenv_values(".env")
+env_path = os.path.dirname(os.path.realpath(__file__))+ "/.env"
+config = dotenv_values(env_path)
+
 UPWORK_FOLDER = config["UPWORK_FOLDER"]
 SLACK_TOKEN_KEY = config["SLACK_TOKEN_KEY"]
 
@@ -146,29 +148,7 @@ def fetch_new_jobs():
     print("Fetching upwork jobs at:\t", start_time)
 
     search_urls_df = pd.read_excel(search_urls_file, sheet_name=search_urls_tab)
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # search_urls = list(set(search_urls_df["Search URLs"].tolist()))
-
-    # all_search_jobs_dfs_list = []
-
-    # counter = 0
-    # for url in search_urls:
-    #     counter += 1
-    #     try:
-    #         jobs_df = rss_to_df(url)
-    #         all_search_jobs_dfs_list.append(jobs_df)
-    #         # time.sleep(1.75)
-    #         time.sleep(1.5)
-    #     except:
-    #         print("Error fetching data for url:\t", url)
-
-    #     print('finished fetching rss data from url:\t', counter, 'of', len(search_urls))
-
-    # all_search_job_df = pd.concat(all_search_jobs_dfs_list)
-    # all_search_job_df.drop_duplicates(inplace=True)
-    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # search_urls = list(set(search_urls_df["Search URLs"].tolist()))
+    # search_urls_df = search_urls_df.tail(1)
 
     all_search_jobs_dfs_list = []
 
@@ -465,7 +445,6 @@ def all_jobs():
 
     return all_data
 
-
 def main_jobs_filter(jobs_df):
     remove_from_everything = [
         "trading",
@@ -477,6 +456,10 @@ def main_jobs_filter(jobs_df):
         "casino",
         "gambl",
         "photoshop",
+        "woocommerce",
+        "brand strategy",
+        "angular",
+        "wix",
     ]
 
     keep_descriptions = []
@@ -527,6 +510,8 @@ def main_jobs_filter(jobs_df):
         "php",
         "content writing",
         "video",
+        "android",
+        "ios dev",
     ]
     remove_skills = "|".join(remove_skills)
     remove_skills = remove_skills.lower()
@@ -619,6 +604,25 @@ def find_jobs_by_phrase(jobs_df, skill):
         | (jobs_df["description"].str.contains(skill, case=False, regex=True))
     ]
 
+def best_jobs_flag(record):
+    best_jobs_list = ["zoho(?!\\s+ book)", "langchain", "gpt", "make.com"]
+    best_jobs_list = "|".join(best_jobs_list)
+    best_jobs_list = best_jobs_list.lower()
+
+    if (
+        (
+            bool(re.search(best_jobs_list, record["skills"].lower()))
+            | bool(re.search(best_jobs_list, record["title"].lower()))
+            | bool(re.search(best_jobs_list, record["description"].lower()))
+        )
+        & (
+            (record["lower_dollar_amount"] > float(15))
+            | (record['budget'] > float(299))
+        )
+    ):
+        return "X"
+    else:
+        return ""
 
 if __name__ == "__main__":
     if sys.argv[1] == "upwork_find_best_jobs":
@@ -765,7 +769,8 @@ if __name__ == "__main__":
         # post_jobs_to_slack(all_jobs_df, upwork_jobs_channel_url)
 
     if sys.argv[1] == "aggregate_jobs":
-        print("run time:\t", str(datetime.now()))
+        start_time = datetime.now()
+        print("start time:\t", start_time)
         all_jobs_df = all_jobs()
         all_jobs_df = main_jobs_filter(all_jobs_df)
         all_jobs_df = jobs_analysis(all_jobs_df)
@@ -784,4 +789,8 @@ if __name__ == "__main__":
             [x for x in all_jobs_df.columns if "flag" in x]
         ].apply(lambda x: "X" if "X" in x.values else "", axis=1)
 
+        all_jobs_df['best_job_flag'] = all_jobs_df.apply(lambda x: best_jobs_flag(x), axis=1)
+
         all_jobs_df.to_csv("all_upwork_jobs.csv", index=False)
+
+        print('total run time:\t', datetime.now() - start_time)

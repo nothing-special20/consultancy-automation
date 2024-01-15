@@ -1,8 +1,11 @@
 import requests
+import os
 
 from dotenv import dotenv_values
 
-config = dotenv_values(".env")
+env_path = os.path.dirname(os.path.realpath(__file__))+ "/.env"
+config = dotenv_values(env_path)
+
 MILLION_VERIFIER_API_KEY = config["MILLION_VERIFIER_API_KEY"]
 
 def verify_email(email):

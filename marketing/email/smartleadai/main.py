@@ -1,10 +1,12 @@
 import requests
 import sys
 import json
+import os
 
 from dotenv import dotenv_values
 
-config = dotenv_values(".env")
+env_path = os.path.dirname(os.path.realpath(__file__))+ "/.env"
+config = dotenv_values(env_path)
 
 SMARTLEADAI_API_KEY = config['SMARTLEADAI_API_KEY']
 SMARTLEAD_BASE_URL = 'https://server.smartlead.ai/api'
