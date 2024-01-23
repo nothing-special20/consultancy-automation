@@ -7,14 +7,17 @@ import sys
 
 import pandas as pd
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+# sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 
 from dotenv import dotenv_values
-ENV_VARS = dotenv_values(".env")
+GOOGLE_DIR = os.path.dirname(os.path.realpath(__file__)) + "/"
+env_path = GOOGLE_DIR + ".env"
+ENV_VARS = dotenv_values(env_path)
 
 GOOGLE_SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
-GOOGLE_SERVICE_ACCOUNT_FILE = ENV_VARS["GOOGLE_SERVICE_ACCOUNT_FILE"]
+GOOGLE_SERVICE_ACCOUNT_FILE = GOOGLE_DIR + ENV_VARS["GOOGLE_SERVICE_ACCOUNT_FILE"]
 GOOGLE_SHEET_MAX_RANGE = str(ENV_VARS["GOOGLE_SHEET_MAX_RANGE"])
 UPWORK_LEADS_GOOGLE_SHEET_ID = ENV_VARS["UPWORK_LEADS_GOOGLE_SHEET_ID"]
 UPWORK_LEADS_GOOGLE_SHEET_TAB = ENV_VARS["UPWORK_LEADS_GOOGLE_SHEET_TAB"]
@@ -153,6 +156,24 @@ def get_sheet_values(sheet_id, tab_name):
     df = pd.DataFrame(records, columns=col_names)
     return df
 
+def add_new_values_to_sheet(upwork_data):
+    existing_df = get_sheet_values(UPWORK_LEADS_GOOGLE_SHEET_ID, UPWORK_LEADS_GOOGLE_SHEET_TAB)
+    existing_df['duplicate_key'] = existing_df['job_url'] + existing_df['search_query']
+    already_loaded_jobs = list(set(existing_df['duplicate_key'].tolist()))
+
+    upwork_data['duplicate_key'] = upwork_data['job_url'] + upwork_data['search_query']
+
+    new_records = upwork_data[~upwork_data['duplicate_key'].isin(already_loaded_jobs)]
+    new_records.drop_duplicates(inplace=True)
+
+    new_records = new_records[existing_df.columns.tolist()]
+
+    del new_records['duplicate_key']
+
+    if new_records.shape[0] > 0:
+        google_append_sheet(new_records.values.tolist(), UPWORK_LEADS_GOOGLE_SHEET_ID, UPWORK_LEADS_GOOGLE_SHEET_TAB)
+        print('number of records added to sheet:\t', new_records.shape[0])
+
 if __name__ == "__main__":
     upwork_data = pd.read_csv(UPWORK_DATA_CSV)
     
@@ -163,17 +184,7 @@ if __name__ == "__main__":
         google_share_file(id, "rquin@billmoretech.com")
 
     elif sys.argv[1] == "update_sheet":
-        existing_df = get_sheet_values(UPWORK_LEADS_GOOGLE_SHEET_ID, UPWORK_LEADS_GOOGLE_SHEET_TAB)
-        already_loaded_job_urls = list(set(existing_df['job_url'].tolist()))
-
-        new_records = upwork_data[~upwork_data['job_url'].isin(already_loaded_job_urls)]
-        new_records.drop_duplicates(inplace=True)
-
-        print(new_records)
-        print(new_records.shape)
-
-        if new_records.shape[0] > 0:
-            google_append_sheet(new_records.values.tolist(), UPWORK_LEADS_GOOGLE_SHEET_ID, UPWORK_LEADS_GOOGLE_SHEET_TAB)
+        add_new_values_to_sheet()
 
 
     elif sys.argv[1] == "get_sheet_values":
