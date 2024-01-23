@@ -14,3 +14,4 @@
 *.csv
 *commitlog.d*
 *.pyc
+*google-sheets-creds.json
