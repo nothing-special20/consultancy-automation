@@ -161,6 +161,8 @@ def add_new_values_to_sheet(upwork_data):
     existing_df['duplicate_key'] = existing_df['job_url'] + existing_df['search_query']
     already_loaded_jobs = list(set(existing_df['duplicate_key'].tolist()))
 
+    already_loaded_urls = list(set(existing_df['job_url'].tolist()))
+
     upwork_data['duplicate_key'] = upwork_data['job_url'] + upwork_data['search_query']
 
     new_records = upwork_data[~upwork_data['duplicate_key'].isin(already_loaded_jobs)]
@@ -173,6 +175,11 @@ def add_new_values_to_sheet(upwork_data):
     if new_records.shape[0] > 0:
         google_append_sheet(new_records.values.tolist(), UPWORK_LEADS_GOOGLE_SHEET_ID, UPWORK_LEADS_GOOGLE_SHEET_TAB)
         print('number of records added to sheet:\t', new_records.shape[0])
+
+    deduplicated_jobs = upwork_data[~upwork_data['job_url'].isin(already_loaded_urls)]
+
+    if deduplicated_jobs.shape[0] > 0:
+        return deduplicated_jobs
 
 if __name__ == "__main__":
     upwork_data = pd.read_csv(UPWORK_DATA_CSV)

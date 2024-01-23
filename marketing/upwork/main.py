@@ -77,7 +77,7 @@ def rss_to_df(url):
             "title": title,
             "job_url": job_url,
             "description": description,
-            "pub_date": pub_date,
+            "pub_date": str(pub_date),
             "lower_dollar_amount": lower_dollar_amount,
             "upper_dollar_amount": upper_dollar_amount,
             "budget": budget,
@@ -384,7 +384,7 @@ def fetch_new_jobs():
     all_search_job_df = all_search_job_df.sort_values(by=["pub_date"], ascending=False)
 
     # for crm_name in ["pipedrive", "highlevel", "hubspot", "salesforce", "monday", "zoho", "gpt", "artificial intelligence", "openai", "langchain"]:
-    for crm_name in ["zoho", "hubspot", "gpt", "automation", "langchain", "make.com"]:
+    for crm_name in ["zoho", "hubspot", "gpt", "automation", "langchain", "make.com", "api "]:
         all_search_job_df[crm_name + "_flag"] = ""
         all_search_job_df[crm_name + "_flag"][
             [
@@ -435,8 +435,20 @@ def fetch_new_jobs():
     return all_search_job_df
 
 
-def all_jobs():
+def all_jobs(n_most_recent_days=30):
     all_files = [UPWORK_FOLDER + x for x in os.listdir(UPWORK_FOLDER) if ".csv" in x]
+
+    print("Total number of files:\t", len(all_files))
+
+    # filter out all files that are older than n_most_recent_days, based on the date in the file name
+    all_files = [
+        x
+        for x in all_files
+        if datetime.strptime(re.findall("[0-9]{4}-[0-9]{2}-[0-9]{2}", x)[0], "%Y-%m-%d")
+        > (datetime.now() - pd.Timedelta(days=n_most_recent_days))
+    ]
+
+    print("Total number of files after filtering:\t", len(all_files))
 
     all_data = [pd.read_csv(x) for x in all_files]
     all_data = pd.concat(all_data)
@@ -771,7 +783,7 @@ if __name__ == "__main__":
     if sys.argv[1] == "aggregate_jobs":
         start_time = datetime.now()
         print("start time:\t", start_time)
-        all_jobs_df = all_jobs()
+        all_jobs_df = all_jobs(2)
         all_jobs_df = main_jobs_filter(all_jobs_df)
         all_jobs_df = jobs_analysis(all_jobs_df)
         all_jobs_df.drop_duplicates(subset=["title"], inplace=True)
@@ -794,3 +806,16 @@ if __name__ == "__main__":
         all_jobs_df.to_csv("all_upwork_jobs.csv", index=False)
 
         print('total run time:\t', datetime.now() - start_time)
+
+    if sys.argv[1] == 'all_zoho_jobs':
+        start_time = datetime.now()
+        print("start time:\t", start_time)
+        all_jobs_df = all_jobs(2)
+        all_jobs_df.drop_duplicates(subset=["title"], inplace=True)
+        all_jobs_df["pub_date"] = pd.to_datetime(all_jobs_df["pub_date"])
+        zoho_jobs_df = jobs_filter(all_jobs_df, "zoho")
+        zoho_jobs_df.to_csv("zoho_jobs.csv", index=False)
+        print(zoho_jobs_df.shape)
+
+    if sys.argv[1] == 'test':
+        all_jobs(7)
