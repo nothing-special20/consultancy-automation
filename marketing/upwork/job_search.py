@@ -48,37 +48,50 @@ def build_params_from_kws(kw_list):
         params_list.append({"q": kw, "sort": "recency", "paging": "0"})
     return params_list
 
-def filter_results(df):
-    ignore_descriptions = ["join our team"]
-    ignore_descriptions = '|'.join(ignore_descriptions)
-
-    df = df[~df['description'].str.contains(ignore_descriptions, case=False)]
-
-    df = df[(df['upper_dollar_amount'] > 30) | (df['budget'] > 500)]
-
-    return df
 
 def remove_titles(df):
-    rm_titles = ["appointment setter", "sales development rep", "wordpress", "android", "ios"]
+    rm_titles = ["appointment setter", "sales development rep", "wordpress", "android", "ios", "sales manager", "image editing", "sharepoint", "paid media", "ui/ux", "ux/ui", "data scientist", "spanish", "bookkeeper", "3d print", "qa test", "accountant", "Solidworks", "lavarvel", "vue js", "data analyst", "mern stack", " sap ", "blog post", "advertising specialist", "media buyer", "co founder", "co-founder", "firmware", "salesforce", "accountant", "betting", "3d", "virtual assistant", "powerpoint", "firebase", "ebay", "plugin", "writer", "tax", "crypto", "windows", "vba", "cisco", "theme"]
     rm_titles = '|'.join(rm_titles)
+    rm_titles = rm_titles.lower()
 
     df = df[~df['title'].str.contains(rm_titles, case=False)]
 
     return df
 
 
+async def filter_results(df):
+    ignore_descriptions = ["join our team"]
+    ignore_descriptions = '|'.join(ignore_descriptions)
+
+    df = df[~df['description'].str.contains(ignore_descriptions, case=False)]
+
+    df = df[((df['upper_dollar_amount'] > 35) & (df['lower_dollar_amount'] > 20)) | (df['budget'] > 500)]
+
+    df = remove_titles(df)
+
+    #convert pub date to datetime
+    df['pub_date'] = pd.to_datetime(df['pub_date'])
+
+    df = df[df['pub_date'] > datetime.now() - pd.Timedelta(hours=8)]
+
+    return df
+
 def build_params_list():
-    base_kw_list = ["zoho crm", "zoho flow", "zoho", "make.com", "make.com", "airtable", "crm cleaning", "django", "langchain", "zapier", "gpt", "smartlead.ai", "apollo.io", "automation", "marketing automation", "automated workflow", "integrate", "integration", "crm integration", "crm", "crm automation", "email automation", "Customer Relationship Management", "project workflows", "api integration", "business process automation", "streamline", "data enrichment", "data cleaning", "data cleansing", "neverbounce", "never bounce", "million verifier", "crm consultant", "AI Systems", "automation systems", "ai automation", "ai business", "business automation", "sales process", "sales automation", "digital marketing automation", "automation expert", "digital transformation", "llm", "large language model","generative ai", "spacy", "hugging face", "air table", "calendly", "integrations", "tech stack automation", "omnichannel automation", "notion", "lucidchart", "lucid chart", "airtable system"]
+    base_kw_list = ["zoho crm", "zoho flow", "zoho", "make.com", "make.com", "airtable", "crm cleaning", "django", "langchain", "zapier", "gpt", "smartlead.ai", "apollo.io", "automation", "marketing automation", "automated workflow", "integrate", "integration", "crm integration", "crm", "crm automation", "email automation", "Customer Relationship Management", "project workflows", "api integration", "business process automation", "streamline", "data enrichment", "data cleaning", "data cleansing", "neverbounce", "never bounce", "million verifier", "crm consultant", "AI Systems", "automation systems", "ai automation", "ai business", "business automation", "sales process", "sales automation", "digital marketing automation", "automation expert", "digital transformation", "llm", "large language model","generative ai", "spacy", "hugging face", "air table", "calendly", "integrations", "tech stack automation", "omnichannel automation", "notion", "lucidchart", "lucid chart", "airtable system", "data mining", "data scrubbing", "data extraction", "data pipeline", "chatgpt", "chat gpt", "zoho one", "zoho suite", "zohocrm", "zoho automation", "zoho forms", "zoho implementation", "integrate zoho", "zoho crm setup", "Lead Management Automation", "crm optimization", "data management", "google analytics"]
 
     base_kw_list = list(set(base_kw_list))
 
+    skills_list = ["zoho crm", "automation", "make.com", "data integration", "api integration", "gpt", "chatgpt", "langchain", "airtable", "google analytics"]
+
     title_searches = [f'title:("{kw}")' for kw in base_kw_list]
     description_searches = [f'description:("{kw}")' for kw in base_kw_list]
+    details_searches = [f'details:("{kw}")' for kw in base_kw_list]
+    skills_searches = [f'skills:("{kw}")' for kw in skills_list]
 
-    all_searches = title_searches + description_searches
+    all_searches = title_searches + description_searches + details_searches + skills_searches
 
     #ignore searches
-    ignore_searches = ["PHP", "video editor", "blockchain", "trading automation", ".net", "zoho books", "appointment setter", "sales development rep", "wordpress", "android", "ios"]
+    ignore_searches = ["PHP", "video editor", "blockchain", "trading automation", ".net", "zoho books", "appointment setter", "sales development rep", "wordpress", "android", "ios", "animator", "full time", "full-time", "join our team", "exciting", "Wix", "Copywriter", "Pay Per Click Expert", "PPC Expert"]
     ignore_searches = [f'"{x}"' for x in ignore_searches]
     ignore_searches = " OR ".join(ignore_searches)
     ignore_searches = f" AND NOT ({ignore_searches})"

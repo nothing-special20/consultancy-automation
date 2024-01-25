@@ -1,6 +1,7 @@
 import os, sys
 import json
 import requests
+import traceback
 
 import pandas as pd
 #show all pd columns
@@ -11,6 +12,7 @@ import time
 import traceback
 
 from datetime import datetime
+import asyncio
 
 parent_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 MARKETING_DIR = parent_dir + "/marketing"
@@ -53,22 +55,86 @@ def post_jobs_to_slack(jobs_df, slack_url):
             )
 
         text = title + "\n" + pay + "\n" + jobs_df.iloc[row]["job_url"] + "\n"
+
         payload = {"text": text}
         headers = {"Content-type": "application/json"}
-        response = requests.post(slack_url, json=payload, headers=headers)
+        requests.post(slack_url, json=payload, headers=headers)
 
-        return response
+def log_to_file(text):
+    log_file = "upwork_lead_automation_log.txt"
+    with open(log_file, 'a') as f:
+        f.write(text + '\n')
+
+
+#write an async function that will run the search and post to slack
+async def upload_new_records(search_result, search_url):
+    new_records = await add_new_values_to_sheet(search_result)
+
+    if new_records is None:
+        no_new_records_msg = str(datetime.now()) + "\t" + 'No new records:\t' + search_url
+        log_to_file(no_new_records_msg)
+
+    else:
+        filtered_records = await upwork.filter_results(new_records)
+        filtered_records_msg = 'Number of filtered records:\t' + str(filtered_records.shape[0])
+        print(filtered_records_msg)
+        log_to_file(filtered_records_msg)
+        if filtered_records.shape[0] > 0:
+            post_jobs_to_slack(filtered_records, UPWORK_SLACK_CHANNEL_WEBHOOK_URL)
+            slack_msg = str(datetime.now()) + "\t" + '# of new jobs posted to slack:\t' + str(filtered_records.shape[0])
+            print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+            print(slack_msg)
+            log_to_file(slack_msg)
+
+# def upload_new_records_old(search_result, search_url):
+#     new_records = add_new_values_to_sheet(search_result)
+
+#     if new_records is None:
+#         no_new_records_msg = str(datetime.now()) + "\t" + 'No new records:\t' + search_url
+#         log_to_file(no_new_records_msg)
+
+#     else:
+#         filtered_records = upwork.filter_results(new_records)
+#         filtered_records_msg = 'Number of filtered records:\t' + str(filtered_records.shape[0])
+#         print(filtered_records_msg)
+#         log_to_file(filtered_records_msg)
+#         if filtered_records.shape[0] > 0:
+#             post_jobs_to_slack(filtered_records, UPWORK_SLACK_CHANNEL_WEBHOOK_URL)
+#             slack_msg = str(datetime.now()) + "\t" + '# of new jobs posted to slack:\t' + str(filtered_records.shape[0])
+#             print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
+#             print(slack_msg)
+#             log_to_file(slack_msg)
 
 if __name__ == "__main__":
     if sys.argv[1] == 'upwork_lead_automation':
         params_list = upwork.build_params_list()
+        # params_list = upwork.build_params_from_kws(['video edit'])
+        # print(params_list)
+        
         # loop through the same process ad nauseum
-        for i in range(0, 1000):
+        ignore_urls = []
+        for i in range(0, 1):
+            start_iteration_msg = f'{str(datetime.now())} Iteration {str(i)} - # of urls to search:\t' + str(len(params_list) - len(ignore_urls))
+            print('####################################################################')
+            print(start_iteration_msg)
+            print('####################################################################')
+            log_to_file(start_iteration_msg)
             for params in params_list:
+                start_search_time = datetime.now()
                 search_url = upwork.add_params_to_url(upwork.base_url, params)
-                print(search_url)
+                msg = str(datetime.now()) + "\t" + search_url
+                log_to_file(msg)
+
+                if search_url in ignore_urls:
+                    skip_msg = str(datetime.now()) + "\t" + 'skipping:\t' + search_url
+                    log_to_file(skip_msg)
+                    continue
+
                 try:
+                    rss_fetch_start_time = datetime.now()
                     search_result = rss_to_df(search_url)
+                    rss_time_msg = str(datetime.now()) + "\t" + 'RSS fetch time:\t' + str(datetime.now() - rss_fetch_start_time)
+                    log_to_file(rss_time_msg)
                     search_result['search_url'] = search_url
                     search_result['search_query'] = params['q']
                     # create a field called word_count that counts the number of words in the description
@@ -76,15 +142,23 @@ if __name__ == "__main__":
 
                     # creat a field called field_count that counts the number of characters in the description
                     search_result['char_count'] = search_result['description'].apply(lambda x: len(x))
-                    new_records = add_new_values_to_sheet(search_result)
-
-                    if new_records is not None:
-                        filtered_records = upwork.filter_results(new_records)
-                        if filtered_records.shape[0] > 0:
-                            post_jobs_to_slack(filtered_records, UPWORK_SLACK_CHANNEL_WEBHOOK_URL)
-                            print('# of new jobs posted to slack:\t', filtered_records.shape[0])
+                    
+                    asyncio.run(upload_new_records(search_result, search_url))
+                    # upload_new_records_old(search_result, search_url)
                         
                 except:
-                    print('error with:\t', search_url)
+                    error_msg = str(datetime.now()) + "\t" + 'error with:\t' + search_url
+                    print(error_msg)
+                    log_to_file(error_msg)
+                    log_to_file(traceback.format_exc())
+                    ignore_urls.append(search_url)
+                    print('Number of urls to ignore:\t' + str(len(ignore_urls)))
 
-                time.sleep(1.5)
+
+                end_search_time = datetime.now()
+                #if the search took less than 1 second, wait 1 second
+                time_delta = end_search_time - start_search_time
+                if time_delta.seconds < 1.5:
+                    time.sleep(1.5-time_delta.seconds)
+                else:
+                    time.sleep(0.001)
