@@ -11,14 +11,17 @@ import traceback
 
 from datetime import datetime
 
+import urllib.parse
+
 parent_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 MARKETING_DIR = parent_dir + "/marketing"
 EMAIL_DIR = parent_dir + "/marketing/email"
 APOLLO_DIR = parent_dir + "/marketing/email/apollo.io"
 MILLION_VERIFIER_DIR = parent_dir + "/marketing/email/million_verifier"
 ZOHO_DIR = parent_dir + "/zoho"
+GOOGLE_DIR = parent_dir + "/google"
 
-for x in [parent_dir, MARKETING_DIR, EMAIL_DIR, APOLLO_DIR, ZOHO_DIR, MILLION_VERIFIER_DIR]:
+for x in [parent_dir, MARKETING_DIR, EMAIL_DIR, APOLLO_DIR, ZOHO_DIR, MILLION_VERIFIER_DIR, GOOGLE_DIR]:
     sys.path.append(parent_dir)
 
 from dotenv import dotenv_values
@@ -35,6 +38,8 @@ from marketing.email.apollo_io import main as apollo
 from marketing.email.million_verifier import main as mil_ver
 
 from zoho.crm import main as zoho_crm
+
+from google.sheets import main as gsheets
 
 def build_apollo_contacts_df(top_range, q_keywords):
     data_list = []
@@ -157,7 +162,7 @@ if __name__ == "__main__":
         apollo_verified_emails_file = INTEGRATION_DATA_FOLDER + os.path.basename(apollo_file).split('.')[0] + '_verified_emails.csv'
         final_output.to_csv(apollo_verified_emails_file)
 
-    elif sys.argv[1] == "create_upwork_deal":
+    elif sys.argv[1] == "xyz":
         contact_records = [
             {
                 "Email_Opt_Out": False,
@@ -176,3 +181,45 @@ if __name__ == "__main__":
         ]
 
         # contacts = zoho_crm.create_contacts(zoho_crm.ZOHO_AUTH_TOKEN, contact_records)
+
+    elif sys.argv[1] == "create_upwork_deal":
+        sheet_data = gsheets.get_sheet_values(gsheets.UPWORK_LEADS_GOOGLE_SHEET_ID, gsheets.UPWORK_LEADS_GOOGLE_SHEET_TAB)
+
+        job_url = sys.argv[2]
+        
+        sheet_data['job_url'] = sheet_data['job_url'].astype(str)
+        sheet_data['job_url'] = [urllib.parse.unquote(x) for x in sheet_data['job_url']]
+        print(sheet_data.shape)
+        job_details = sheet_data[[job_url in str(x) for x in sheet_data['job_url'].to_list()]]
+        job_details = job_details.to_dict('records')[0]
+
+        deal_name = job_details['title']
+        description = job_details['description']
+
+        closing_date = datetime.now() + pd.Timedelta(days=7)
+        closing_date = closing_date.strftime("%Y-%m-%d")
+
+        if job_details['budget'] != 0:
+            amount = job_details['budget']
+
+        else:
+            amount = (job_details['upper_dollar_amount'] + job_details['lower_dollar_amount']) / 2 * 10
+
+        deal_records = [
+            {
+                "Deal_Name": deal_name,
+                "Stage": "Negotiation/Review",
+                "Amount": amount,
+                "Closing_Date": closing_date,
+                "Probability": 10,
+                "Account_Name": "Unmapped Upwork Deal",
+                "Type": "New Business",
+                "Lead_Source": "Upwork",
+                "Description": description,
+            }
+        ]
+
+        print(deal_name)
+
+        deals = zoho_crm.create_deal(zoho_crm.ZOHO_AUTH_TOKEN, deal_records)
+        print(deals.text)
