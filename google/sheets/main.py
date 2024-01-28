@@ -149,15 +149,15 @@ def google_share_file(real_file_id, email):
 
     return ids
 
-async def get_sheet_values(sheet_id, tab_name):
+def get_sheet_values(sheet_id, tab_name):
     google_values = GOOGLE_SHEETS_SERVICE.spreadsheets().values().get(spreadsheetId=sheet_id, range=tab_name).execute()
     records = google_values['values'][1:]
     col_names = google_values['values'][0]
     df = pd.DataFrame(records, columns=col_names)
     return df
 
-async def add_new_values_to_sheet(upwork_data):
-    existing_df = await get_sheet_values(UPWORK_LEADS_GOOGLE_SHEET_ID, UPWORK_LEADS_GOOGLE_SHEET_TAB)
+def add_new_values_to_sheet(upwork_data):
+    existing_df = get_sheet_values(UPWORK_LEADS_GOOGLE_SHEET_ID, UPWORK_LEADS_GOOGLE_SHEET_TAB)
     existing_df['duplicate_key'] = existing_df['job_url'] + existing_df['search_query']
     already_loaded_jobs = list(set(existing_df['duplicate_key'].tolist()))
 
