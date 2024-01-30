@@ -6,6 +6,7 @@ import traceback
 import pandas as pd
 #show all pd columns
 pd.set_option('display.max_columns', None)
+pd.set_option('display.width', 1200)
 
 import time
 
@@ -69,8 +70,12 @@ def log_to_file(text):
 #write an async function that will run the search and post to slack
 def upload_new_records(search_result):
     try:
-        new_records = gsheets.add_new_values_to_sheet(search_result)
         search_urls = "\t".join(search_result['search_url'].unique())
+    except:
+        search_urls = "_"
+
+    try:
+        new_records = gsheets.add_new_values_to_sheet(search_result)
 
         if new_records is None:
             no_new_records_msg = str(datetime.now()) + "\t" + 'No new records:\t' + search_urls
@@ -99,9 +104,9 @@ if __name__ == "__main__":
     if sys.argv[1] == 'upwork_lead_automation':
         params_list = upwork.build_params_list()#[:40]
 
-        # params_list = upwork.build_params_from_kws(["microsoft excel"])
+        # params_list = upwork.build_params_from_kws(["We are looking for a fulfillment partner to build custom marketing"])
         
-        num_parallel_uploads = 20
+        num_parallel_uploads = 30#1 #30
         print("# of parallel procs:\t", num_parallel_uploads)
 
         ignore_urls = []
@@ -116,11 +121,15 @@ if __name__ == "__main__":
             search_result_list = []
             search_url_list = []
             tasks_loaded = 0
+            search_count = 0
             for params in params_list:
                 start_search_time = datetime.now()
                 search_url = upwork.add_params_to_url(upwork.base_url, params)
                 msg = str(datetime.now()) + "\t" + search_url
                 log_to_file(msg)
+
+                search_count += 1
+
 
                 if search_url in ignore_urls:
                     skip_msg = str(datetime.now()) + "\t" + 'skipping:\t' + search_url
@@ -160,7 +169,7 @@ if __name__ == "__main__":
                 time_delta = end_search_time - start_search_time
                 seconds_left = time_delta.microseconds / 1000000
                 #.5 & .75 & .85 are too fast
-                wait_time_per_rss_request = 1.35 #1#.25
+                wait_time_per_rss_request = 1.25 #1.15 #1#.25
                 if seconds_left < wait_time_per_rss_request:
                     time_left = wait_time_per_rss_request - seconds_left
                     time.sleep(time_left)
@@ -189,6 +198,7 @@ if __name__ == "__main__":
                     parallel_load_end_time = datetime.now()
                     parallel_load_time_msg = str(parallel_load_end_time) + "\t" + 'Parallel load time:\t' + str(parallel_load_end_time - parallel_load_start_time)
                     log_to_file(parallel_load_time_msg)
+                    print('Searches complete on this iteration:\t', search_count)
                     # time.sleep(120)
 
             iteration_time_msg = str(datetime.now()) + "\t" + 'Iteration time:\t' + str(datetime.now() - iteration_start_time)
@@ -221,7 +231,7 @@ if __name__ == "__main__":
         #filter to today only
         today = datetime.now()
         today = today.strftime("%Y-%m-%d")
-        sheet_data = sheet_data[sheet_data['pub_date'] > datetime.now() - pd.Timedelta(hours=8)]
+        sheet_data = sheet_data[sheet_data['pub_date'] > datetime.now() - pd.Timedelta(hours=2)]
 
         filtered_records = upwork.filter_results(sheet_data)
 
@@ -234,7 +244,9 @@ if __name__ == "__main__":
         sheet_data = gsheets.get_sheet_values(gsheets.UPWORK_LEADS_GOOGLE_SHEET_ID, gsheets.UPWORK_LEADS_GOOGLE_SHEET_TAB)
         sheet_data['pub_date'] = pd.to_datetime(sheet_data['pub_date'])
 
-        filter_hours = 0
+
+        # filter_hours = 0
+        filter_hours = 24
         filtered_records = upwork.filter_results(sheet_data, filter_hours)
 
         filtered_records.drop_duplicates(subset=['job_url'], inplace=True)
@@ -243,25 +255,42 @@ if __name__ == "__main__":
         filtered_records['pub_day'] = filtered_records['pub_date'].dt.date
         filtered_records_daily = filtered_records[['pub_day', 'title']].groupby('pub_day').count().reset_index()
 
-        print(filtered_records_daily)
+        skill_analysis = filtered_records#.head(5)
 
-    elif sys.argv[1] == "assign_tags":
-        all_jobs_data = gsheets.get_sheet_values(gsheets.UPWORK_LEADS_GOOGLE_SHEET_ID, gsheets.UPWORK_LEADS_GOOGLE_SHEET_TAB)
-        all_jobs_data['pub_date'] = pd.to_datetime(all_jobs_data['pub_date'])
-        all_jobs_data.drop_duplicates(subset=['job_url'], inplace=True)
-        #sort all_jobs_data by pub_date descending
-        all_jobs_data.sort_values(by=['pub_date'], ascending=False, inplace=True)
-        all_jobs_data.reset_index(drop=True, inplace=True)
 
-        for i in range(0, 30):
-            already_loaded_data = gsheets.get_sheet_values(gsheets.UPWORK_LEADS_GOOGLE_SHEET_ID, "job_tags")
-            already_loaded_urls = already_loaded_data['job_url'].values.tolist()
+        #if zoho crm is in the description, add zoho crm to the skills
+        skill_analysis['skills'] = skill_analysis.apply(lambda x: x['skills'] + 'zoho crm' if 'zoho crm' in x['description'].lower() else x['skills'], axis=1)
 
-            untagged_jobs = all_jobs_data[~all_jobs_data['job_url'].isin(already_loaded_urls)]
-            untagged_jobs = untagged_jobs.head(50)
-            job_tags = ["zoho crm", "automation", "analytics", "data visualization", "artificial intelligence", "other", "writing code", "ai image generation"]
-            untagged_jobs['tags'] = untagged_jobs['title'].apply(lambda x: hf_topic_classification(x, job_tags))
+        skill_analysis['skills'] = skill_analysis['skills'].str.split(', ')
+        skill_analysis = skill_analysis.explode('skills')
 
-            untagged_jobs = untagged_jobs[['job_url', 'title', 'tags']]
+        
 
-            gsheets.google_append_sheet(untagged_jobs.values.tolist(), gsheets.UPWORK_LEADS_GOOGLE_SHEET_ID, "job_tags")
+        skill_analysis = skill_analysis[['title', 'lower_dollar_amount', 'upper_dollar_amount', 'skills']]
+
+        skill_analysis['lower_dollar_amount'] = skill_analysis['lower_dollar_amount'].astype(float)
+        skill_analysis['upper_dollar_amount'] = skill_analysis['upper_dollar_amount'].astype(float)
+        skill_analysis.drop_duplicates(subset=['title'], inplace=True)
+
+        skill_analysis_stats = skill_analysis.groupby('skills').agg({'title': 'count', 'lower_dollar_amount': 'mean', 'upper_dollar_amount': 'mean'}).reset_index()
+
+        #sort skill_analysis by upper_dollar_amount
+        skill_analysis_stats.sort_values(by=['upper_dollar_amount'], ascending=False, inplace=True)
+        skill_analysis_stats = skill_analysis_stats[skill_analysis_stats['title'] > 1]
+
+        print(skill_analysis_stats.head(25))
+
+        skill_df = filtered_records[(filtered_records['description'].str.contains("zoho crm", case=False)) | (filtered_records['description'].str.contains("zoho crm", case=False))]
+
+        skill_df = skill_df[['title', 'lower_dollar_amount', 'upper_dollar_amount']]
+
+        print(skill_df)
+        # make_df['skills'] = 'make.com'
+
+
+        # # make_df = skill_analysis[~skill_analysis['skills'].str.contains("make", case=False)]
+        # print(make_df)
+        # print(make_df.shape)
+
+        # skill_analysis_stats_two = make_df.groupby('skills').agg({'title': 'count', 'lower_dollar_amount': 'mean', 'upper_dollar_amount': 'mean'}).reset_index()
+        # print(skill_analysis_stats_two)
