@@ -15,3 +15,4 @@
 *commitlog.d*
 *.pyc
 *google-sheets-creds.json
+*integrations/upwork_lead_automation_log.txt
