@@ -185,7 +185,10 @@ if __name__ == "__main__":
     elif sys.argv[1] == "create_upwork_deal":
         sheet_data = gsheets.get_sheet_values(gsheets.UPWORK_LEADS_GOOGLE_SHEET_ID, gsheets.UPWORK_LEADS_GOOGLE_SHEET_TAB)
 
-        job_url = sys.argv[2]
+        job_url = urllib.parse.unquote(sys.argv[2])
+
+        # "Negotiation/Review", "Proposal/Price Quote"
+        stage = sys.argv[3]
         
         sheet_data['job_url'] = sheet_data['job_url'].astype(str)
         sheet_data['job_url'] = [urllib.parse.unquote(x) for x in sheet_data['job_url']]
@@ -208,7 +211,7 @@ if __name__ == "__main__":
         deal_records = [
             {
                 "Deal_Name": deal_name,
-                "Stage": "Negotiation/Review",
+                "Stage": stage,
                 "Amount": amount,
                 "Closing_Date": closing_date,
                 "Probability": 10,
