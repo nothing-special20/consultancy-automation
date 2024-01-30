@@ -23,6 +23,9 @@ UPWORK_LEADS_GOOGLE_SHEET_ID = ENV_VARS["UPWORK_LEADS_GOOGLE_SHEET_ID"]
 UPWORK_LEADS_GOOGLE_SHEET_TAB = ENV_VARS["UPWORK_LEADS_GOOGLE_SHEET_TAB"]
 UPWORK_DATA_CSV = ENV_VARS['UPWORK_DATA_CSV']
 
+UPWORK_AI_RESEARCH_GOOGLE_SHEET_ID = ENV_VARS["UPWORK_AI_RESEARCH_GOOGLE_SHEET_ID"]
+UPWORK_AI_RESEARCH_GOOGLE_SHEET_TAB = ENV_VARS["UPWORK_AI_RESEARCH_GOOGLE_SHEET_TAB"]
+
 creds = None
 creds = service_account.Credentials.from_service_account_file(
         GOOGLE_SERVICE_ACCOUNT_FILE, scopes=GOOGLE_SCOPES)
@@ -187,7 +190,7 @@ if __name__ == "__main__":
     if sys.argv[1] == "create_sheet":
         col_names = [upwork_data.columns.tolist()]
         print(col_names)
-        id = google_create_sheet(col_names, "upwork_leads_automation")
+        id = google_create_sheet(col_names, "upwork_ai_research")
         google_share_file(id, "rquin@billmoretech.com")
 
     elif sys.argv[1] == "update_sheet":
