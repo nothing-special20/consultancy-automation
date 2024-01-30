@@ -1,12 +1,13 @@
 import requests
-import os
+import os, sys
 
 from dotenv import dotenv_values
 
-env_path = os.path.dirname(os.path.realpath(__file__))+ "/.env"
+env_path = os.path.dirname(os.path.realpath(__file__)) + "/.env"
 config = dotenv_values(env_path)
 
 MILLION_VERIFIER_API_KEY = config["MILLION_VERIFIER_API_KEY"]
+MILLION_VERIFIER_DATA_FOLDER = config["MILLION_VERIFIER_DATA_FOLDER"]
 
 def verify_email(email):
     url = f"https://api.millionverifier.com/api/v3/?api={MILLION_VERIFIER_API_KEY}&email={email}&timeout=timer3"
@@ -40,3 +41,7 @@ def verify_emails_bulk(csv_file):
     response = requests.request("POST", url, files=files)
 
     return response.text
+
+if sys.argv[1] == "verify":
+    email = sys.argv[2]
+    print(verify_email(email))
