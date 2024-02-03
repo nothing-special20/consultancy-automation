@@ -29,6 +29,7 @@ env_path = MAIN_DIR + ".env"
 ENV_VARS = dotenv_values(env_path)
 
 UPWORK_SLACK_CHANNEL_WEBHOOK_URL = ENV_VARS["UPWORK_SLACK_CHANNEL_WEBHOOK_URL"]
+UPWORK_AI_IMG_SLACK_CHANNEL_WEBHOOK_URL = ENV_VARS["UPWORK_AI_IMG_SLACK_CHANNEL_WEBHOOK_URL"]
 
 from marketing.upwork import job_search as upwork
 from marketing.upwork.main import rss_to_df as rss_to_df
@@ -36,11 +37,22 @@ from google.sheets import main as gsheets
 
 from upwork_machine_learning_analysis import hf_topic_classification
 
-def post_jobs_to_slack(jobs_df, slack_url):
+def post_jobs_to_slack(jobs_df):
     for row in range(jobs_df.shape[0]):
         budget = jobs_df.iloc[row]["budget"]
         title = jobs_df.iloc[row]["title"]
         pay = ""
+
+        slack_url = UPWORK_SLACK_CHANNEL_WEBHOOK_URL
+
+        # topics = ["other", "image or design related"]
+        # title_tag = hf_topic_classification(title, topics)
+
+        keywords = ["graphic", "illustration", "image", "photo"]
+        keywords = [x.lower() for x in keywords]
+
+        if any([x in title.lower() for x in keywords]):
+            slack_url = UPWORK_AI_IMG_SLACK_CHANNEL_WEBHOOK_URL
 
         if budget != 0:
             pay = "Flat Project Budget: $" + str(budget)
@@ -87,7 +99,7 @@ def upload_new_records(search_result):
             print(filtered_records_msg)
             log_to_file(filtered_records_msg)
             if filtered_records.shape[0] > 0:
-                post_jobs_to_slack(filtered_records, UPWORK_SLACK_CHANNEL_WEBHOOK_URL)
+                post_jobs_to_slack(filtered_records)
                 slack_msg = str(datetime.now()) + "\t" + '# of new jobs posted to slack:\t' + str(filtered_records.shape[0])
                 print("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~")
                 print(slack_msg)
@@ -169,7 +181,7 @@ if __name__ == "__main__":
                 time_delta = end_search_time - start_search_time
                 seconds_left = time_delta.microseconds / 1000000
                 #.5 & .75 & .85 are too fast
-                wait_time_per_rss_request = 1.25 #1.15 #1#.25
+                wait_time_per_rss_request = 1.5 #1.15 #1#.25
                 if seconds_left < wait_time_per_rss_request:
                     time_left = wait_time_per_rss_request - seconds_left
                     time.sleep(time_left)
@@ -238,7 +250,7 @@ if __name__ == "__main__":
         filtered_records.drop_duplicates(subset=['job_url'], inplace=True)
 
         print(filtered_records.shape)
-        post_jobs_to_slack(filtered_records, UPWORK_SLACK_CHANNEL_WEBHOOK_URL)
+        post_jobs_to_slack(filtered_records)
 
     elif sys.argv[1] == "analyze_trends":
         sheet_data = gsheets.get_sheet_values(gsheets.UPWORK_LEADS_GOOGLE_SHEET_ID, gsheets.UPWORK_LEADS_GOOGLE_SHEET_TAB)
