@@ -1,5 +1,8 @@
 import requests
 import os, sys
+import io
+
+import pandas as pd
 
 from dotenv import dotenv_values
 
@@ -40,7 +43,24 @@ def verify_emails_bulk(csv_file):
 
     response = requests.request("POST", url, files=files)
 
-    return response.text
+    return response.json()
+
+def download_report(id):
+    url = "https://bulkapi.millionverifier.com/bulkapi/v2/download"
+
+    params = {
+        "key": MILLION_VERIFIER_API_KEY,
+        "file_id": int(id),
+        "filter": "all"
+    }
+
+    response = requests.get(url, params=params)
+
+    csv_data = io.StringIO(response.text)
+
+    df = pd.read_csv(csv_data)
+
+    return df
 
 if sys.argv[1] == "verify":
     email = sys.argv[2]
