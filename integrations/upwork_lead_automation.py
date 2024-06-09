@@ -30,6 +30,10 @@ ENV_VARS = dotenv_values(env_path)
 
 UPWORK_SLACK_CHANNEL_WEBHOOK_URL = ENV_VARS["UPWORK_SLACK_CHANNEL_WEBHOOK_URL"]
 UPWORK_AI_IMG_SLACK_CHANNEL_WEBHOOK_URL = ENV_VARS["UPWORK_AI_IMG_SLACK_CHANNEL_WEBHOOK_URL"]
+UPWORK_HUBSPOT_SLACK_CHANNEL_WEBHOOK_URL = ENV_VARS["UPWORK_HUBSPOT_SLACK_CHANNEL_WEBHOOK_URL"]
+UPWORK_SMARTLEAD_SLACK_CHANNEL_WEBHOOK_URL = ENV_VARS["UPWORK_SMARTLEAD_SLACK_CHANNEL_WEBHOOK_URL"]
+UPWORK_AIRTABLE_SLACK_CHANNEL_WEBHOOK_URL = ENV_VARS["UPWORK_AIRTABLE_SLACK_CHANNEL_WEBHOOK_URL"]
+
 
 from marketing.upwork import job_search as upwork
 from marketing.upwork.main import rss_to_df as rss_to_df
@@ -37,22 +41,48 @@ from google.sheets import main as gsheets
 
 from upwork_machine_learning_analysis import hf_topic_classification
 
+def smartlead_filtering(title, description):
+    title = title.lower()
+    description = description.lower()
+    smartlead_bool = "smartlead" in title or "smart lead" in title or "smartlead" in description
+
+    return smartlead_bool
+
+def airtable_filtering(title, description):
+    title = title.lower()
+    description = description.lower()
+    smartlead_bool = "airtable" in title or "air table" in title or "airtable" in description or "air table" in description
+
+    return smartlead_bool
+
+
 def post_jobs_to_slack(jobs_df):
     for row in range(jobs_df.shape[0]):
         budget = jobs_df.iloc[row]["budget"]
         title = jobs_df.iloc[row]["title"]
+        description = jobs_df.iloc[row]["description"]
         pay = ""
+        
 
         slack_url = UPWORK_SLACK_CHANNEL_WEBHOOK_URL
 
         # topics = ["other", "image or design related"]
         # title_tag = hf_topic_classification(title, topics)
 
-        keywords = ["graphic", "illustration", "image", "photo"]
+        keywords = ["graphic", "illustration", "image", "photo", "logo", "thumbnail"]
         keywords = [x.lower() for x in keywords]
 
         if any([x in title.lower() for x in keywords]):
             slack_url = UPWORK_AI_IMG_SLACK_CHANNEL_WEBHOOK_URL
+
+        if smartlead_filtering(title, description):
+            slack_url = UPWORK_SMARTLEAD_SLACK_CHANNEL_WEBHOOK_URL
+
+        if "hubspot" in title.lower() or "hubspot" in description.lower():
+            slack_url = UPWORK_HUBSPOT_SLACK_CHANNEL_WEBHOOK_URL
+
+        if airtable_filtering(title, description):
+            slack_url = UPWORK_AIRTABLE_SLACK_CHANNEL_WEBHOOK_URL
 
         if budget != 0:
             pay = "Flat Project Budget: $" + str(budget)
@@ -181,7 +211,7 @@ if __name__ == "__main__":
                 time_delta = end_search_time - start_search_time
                 seconds_left = time_delta.microseconds / 1000000
                 #.5 & .75 & .85 are too fast
-                wait_time_per_rss_request = 1.5 #1.15 #1#.25
+                wait_time_per_rss_request = 1.5 #1.15 #1.15 #1#.25
                 if seconds_left < wait_time_per_rss_request:
                     time_left = wait_time_per_rss_request - seconds_left
                     time.sleep(time_left)
@@ -258,7 +288,7 @@ if __name__ == "__main__":
 
 
         # filter_hours = 0
-        filter_hours = 24
+        filter_hours = 1
         filtered_records = upwork.filter_results(sheet_data, filter_hours)
 
         filtered_records.drop_duplicates(subset=['job_url'], inplace=True)
