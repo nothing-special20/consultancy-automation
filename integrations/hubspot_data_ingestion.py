@@ -1,6 +1,6 @@
 import os, sys
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import urllib.parse
 
@@ -21,12 +21,11 @@ from marketing.email.smartleadai import main as smartlead
 
 if __name__ == "__main__":
     if sys.argv[1] == "create_upwork_deal":
-        sheet_data = gsheets.get_sheet_values(gsheets.UPWORK_LEADS_GOOGLE_SHEET_ID_V6, gsheets.UPWORK_LEADS_GOOGLE_SHEET_TAB)
+        sheet_data = gsheets.get_sheet_values(gsheets.UPWORK_LEADS_GOOGLE_SHEET_ID_V10, gsheets.UPWORK_LEADS_GOOGLE_SHEET_TAB)
 
         job_url = urllib.parse.unquote(sys.argv[2])
 
         # "Negotiation/Review", "Proposal/Price Quote"
-        stage = "test"
 
         upwork_credits_used_on_proposal = int(sys.argv[3])
         
@@ -39,8 +38,12 @@ if __name__ == "__main__":
         deal_name = job_details['title']
         description = job_details['description']
 
-        closing_date = datetime.now() + pd.Timedelta(days=7)
-        closing_date = closing_date.strftime("%Y-%m-%d")
+        # close_date = datetime.now() + timedelta(days=7) + timedelta(hours=5)
+        # close_date = datetime.strptime(datetime.now(), "%Y-%m-%d") + timedelta(days=7) + timedelta(hours=5)
+        close_date = datetime.now() + timedelta(days=7) + timedelta(hours=5)
+        # close_date = close_date.strftime("%Y-%m-%d")
+
+        close_date = int(close_date.timestamp())
 
         #convert job_details['budget'] to float
         job_details['budget'] = float(job_details['budget'])
@@ -54,23 +57,37 @@ if __name__ == "__main__":
         else:
             amount = (job_details['upper_dollar_amount'] + job_details['lower_dollar_amount']) / 2 * 10
 
-        deal_details = {
-                "Deal_Name": deal_name,
-                "Stage": stage,
-                "Amount": amount,
-                "Closing_Date": closing_date,
-                "Probability": 10,
-                "Account_Name": "Unmapped Upwork Deal",
-                "Type": "New Business",
-                "Lead_Source": "Upwork",
-                "Description": description,
-                "Marketing_Cost": .15 * upwork_credits_used_on_proposal,
-            }
+        # deal_details = {
+        #         "Deal_Name": deal_name,
+        #         "Stage": stage,
+        #         "Amount": amount,
+        #         "Closing_Date": closing_date,
+        #         # "Probability": 10,
+        #         # "Account_Name": "Unmapped Upwork Deal",
+        #         "Type": "New Business",
+        #         "Lead_Source": "Upwork",
+        #         "Description": description,
+        #         "Marketing_Cost": .15 * upwork_credits_used_on_proposal,
+        #     }
+            
+        deal_stage_id = hubspot_crm.deal_stage_mapping("Proposal Requested")
+
+        notes = ["JOB DESCRIPTION:\n\n" + description, "JOB URL:\n\n" + job_url, "UPWORK CREDITS USED ON PROPOSAL:\n\n" + str(upwork_credits_used_on_proposal)]
+        
+        deal_properties = {
+            "dealname": deal_name,
+            "hubspot_owner_id": hubspot_crm.HUBSPOT_OWNER_ID,
+            "lead_source": "UPWORK",
+            "dealstage": deal_stage_id,
+            "amount": amount,
+            "notes": notes,
+            "closedate": close_date * 1000,
+        }
 
         print(deal_name)
 
-        # deals = hubspot_crm.create_deal(deal_details)
-        # print(deals.text)
+        deals = hubspot_crm.create_deal(deal_properties)
+        print(deals)
 
     if sys.argv[1] == 'create_hubspot_contacts_from_smartlead_interested_replies':
         # 245908
