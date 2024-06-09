@@ -20,11 +20,13 @@ GOOGLE_SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.go
 GOOGLE_SERVICE_ACCOUNT_FILE = GOOGLE_DIR + ENV_VARS["GOOGLE_SERVICE_ACCOUNT_FILE"]
 GOOGLE_SHEET_MAX_RANGE = str(ENV_VARS["GOOGLE_SHEET_MAX_RANGE"])
 UPWORK_LEADS_GOOGLE_SHEET_ID = ENV_VARS["UPWORK_LEADS_GOOGLE_SHEET_ID"]
+UPWORK_LEADS_GOOGLE_SHEET_ID_V10 = ENV_VARS["UPWORK_LEADS_GOOGLE_SHEET_ID_V10"]
 UPWORK_LEADS_GOOGLE_SHEET_TAB = ENV_VARS["UPWORK_LEADS_GOOGLE_SHEET_TAB"]
 UPWORK_DATA_CSV = ENV_VARS['UPWORK_DATA_CSV']
 
 UPWORK_AI_RESEARCH_GOOGLE_SHEET_ID = ENV_VARS["UPWORK_AI_RESEARCH_GOOGLE_SHEET_ID"]
 UPWORK_AI_RESEARCH_GOOGLE_SHEET_TAB = ENV_VARS["UPWORK_AI_RESEARCH_GOOGLE_SHEET_TAB"]
+EMAIL_ADDRESS = ENV_VARS["EMAIL_ADDRESS"]
 
 creds = None
 creds = service_account.Credentials.from_service_account_file(
@@ -160,7 +162,7 @@ def get_sheet_values(sheet_id, tab_name):
     return df
 
 def add_new_values_to_sheet(upwork_data):
-    existing_df = get_sheet_values(UPWORK_LEADS_GOOGLE_SHEET_ID, UPWORK_LEADS_GOOGLE_SHEET_TAB)
+    existing_df = get_sheet_values(UPWORK_LEADS_GOOGLE_SHEET_ID_V10, UPWORK_LEADS_GOOGLE_SHEET_TAB)
     existing_df['duplicate_key'] = existing_df['job_url'] + existing_df['search_query']
     already_loaded_jobs = list(set(existing_df['duplicate_key'].tolist()))
 
@@ -176,13 +178,19 @@ def add_new_values_to_sheet(upwork_data):
     del new_records['duplicate_key']
 
     if new_records.shape[0] > 0:
-        google_append_sheet(new_records.values.tolist(), UPWORK_LEADS_GOOGLE_SHEET_ID, UPWORK_LEADS_GOOGLE_SHEET_TAB)
+        google_append_sheet(new_records.values.tolist(), UPWORK_LEADS_GOOGLE_SHEET_ID_V10, UPWORK_LEADS_GOOGLE_SHEET_TAB)
         print('number of records added to sheet:\t', new_records.shape[0])
 
     deduplicated_jobs = upwork_data[~upwork_data['job_url'].isin(already_loaded_urls)]
 
     if deduplicated_jobs.shape[0] > 0:
         return deduplicated_jobs
+
+def clear_all_sheet_values(sheet_id, tab_name):
+    request = GOOGLE_SHEETS_SERVICE.spreadsheets().values().clear(spreadsheetId=sheet_id, range=tab_name, body={})
+    response = request.execute()
+
+    print(response)
 
 if __name__ == "__main__":
     upwork_data = pd.read_csv(UPWORK_DATA_CSV)
@@ -191,7 +199,7 @@ if __name__ == "__main__":
         col_names = [upwork_data.columns.tolist()]
         print(col_names)
         id = google_create_sheet(col_names, "upwork_ai_research")
-        google_share_file(id, "rquin@billmoretech.com")
+        google_share_file(id, EMAIL_ADDRESS)
 
     elif sys.argv[1] == "update_sheet":
         add_new_values_to_sheet()
@@ -201,6 +209,12 @@ if __name__ == "__main__":
         df = get_sheet_values(UPWORK_LEADS_GOOGLE_SHEET_ID, UPWORK_LEADS_GOOGLE_SHEET_TAB)
 
         print(df)
+
+    elif sys.argv[1] == "create_custom_sheet":
+        col_names = ["dummy"]
+        sheet_name = sys.argv[2]
+        id = google_create_sheet(col_names, sheet_name)
+        google_share_file(id, EMAIL_ADDRESS)
         
         
 
