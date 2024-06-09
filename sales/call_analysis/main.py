@@ -3,7 +3,9 @@ import sys, os
 
 from dotenv import dotenv_values
 
-config = dotenv_values(".env")
+env_path = os.path.dirname(os.path.realpath(__file__))+ "/.env"
+config = dotenv_values(env_path)
+
 MAIN_FOLDER = config["MAIN_FOLDER"]
 
 import torch
